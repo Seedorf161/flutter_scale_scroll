@@ -7,11 +7,13 @@ class CustomScrollPainter extends StatelessWidget {
   final Size size;
   final ScrollPhysics physics;
   final CustomRegionPainter painter;
+  final ScrollController controller;
 
   CustomScrollPainter({
     this.size,
     this.physics,
     this.painter,
+    this.controller,
   });
 
   @override
@@ -19,6 +21,7 @@ class CustomScrollPainter extends StatelessWidget {
     return new CustomScrollView(
       scrollDirection: Axis.horizontal,
       physics: physics,
+      controller: controller,
       slivers: <Widget>[
         new CustomSliverToBoxAdapter(
           child: new CustomPaint(

@@ -22,23 +22,46 @@ class Chart extends StatefulWidget {
 
 class ChartState extends State<Chart> {
   double _zoom = 100.0;
-  double _startZoom;
+  ScrollController _controller = new ScrollController();
+
+  double _startScale;
+  double _startX;
 
   @override
   Widget build(BuildContext context) {
     return
       new GestureDetector(
         behavior: HitTestBehavior.deferToChild,
-        onScaleStart: (details) => _startZoom = _zoom,
-        onScaleUpdate: (details) =>
-        // TODO: update the scroll position based on the scale
-        setState(() => _zoom = _startZoom * details.scale),
+        onScaleStart: (details) {
+          _startScale = 1.0;
+          _startX = details.focalPoint.dx;
+        },
+        onScaleUpdate: (details) {
+          var scale = 1 + _startScale - details.scale;
+          var dx = _startX - details.focalPoint.dx;
+
+          _startScale = details.scale;
+          _startX = details.focalPoint.dx;
+
+          // Scroll the focal point drift
+          _controller.jumpTo(_controller.offset + dx);
+          // Scale around the focal point
+          setZoom(scale, _controller.offset + details.focalPoint.dx);
+        },
         child:
         new CustomScrollPainter(
           // TODO calculate width based on zoom
-            size: new Size(10000.0, 100.0),
-            painter: new _ChartPainter(_zoom)),
+          size: new Size(10000.0, 100.0),
+          painter: new _ChartPainter(_zoom),
+          controller: _controller,
+        ),
       );
+  }
+
+  void setZoom(double scale, double focalPoint) {
+    var dx = focalPoint * scale - focalPoint;
+    _controller.jumpTo(_controller.offset - dx);
+    setState(() => _zoom /= scale);
   }
 }
 
@@ -71,6 +94,6 @@ class _ChartPainter extends CustomRegionPainter {
 
   @override
   bool shouldRepaint(_ChartPainter oldDelegate) {
-    return true;
+    return _zoom != oldDelegate._zoom;
   }
 }
